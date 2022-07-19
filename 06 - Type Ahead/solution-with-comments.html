@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Type Ahead 👀</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or State">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a state</li>
+    </ul>
+  </form>
+<script>
+const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+const cities = [];
+
+fetch(endpoint)
+    .then(response => response.json())
+    .then(data => cities.push(...data)) // data is itself an array
+    // use spread syntax to grab the items out of the data array and push each item to the cities array
+
+function findMatches(wordtoMatch, cities) {
+    return cities.filter(place => {
+        // here we need to figure out if the city or state matches what was searched
+        const regex = new RegExp(wordtoMatch, 'gi'); // global, case insensitive
+        return place.city.match(regex) || place.state.match(regex);
+    })
+}
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function displayMatches() {
+    const matchArray = findMatches(this.value, cities);
+    const html = matchArray.map(place => {
+        const regex = new RegExp(this.value, "gi");
+        // highlight the letters we typed within the city name and state name
+        const cityName = place.city.replace(regex, `<span class="h1">${this.value}</span>`);
+        const stateName = place.state.replace(regex, `<span class="h1">${this.value}</span>`);
+        return `
+            <li>
+                <span class="name">${cityName}, ${stateName}</span>
+                <span class="population">${numberWithCommas(place.population)}</span>
+            </li>
+        `;
+    }).join(''); // since map returns an array, this will turn it into a string so we can pass it into suggestions.innerHTML
+    suggestions.innerHTML = html;
+}
+
+const searchInput = document.querySelector('.search');
+const suggestions = document.querySelector('.suggestions');
+
+searchInput.addEventListener('change', displayMatches);
+// with 'change', display matches only happens when you click outside the thing
+searchInput.addEventListener('keyup', displayMatches);
+// while 'keyup' will display matches while you're typing
+
+</script>
+</body>
+</html>
